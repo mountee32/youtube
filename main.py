@@ -6,35 +6,27 @@ from youtube_transcript_api import YouTubeTranscriptApi
 import dateutil.parser
 from dotenv import load_dotenv
 import requests
-import openai  # Ensure you have imported openai
+import openai   
 
-# Setup logging
+# Setup Consts, logging and Keys
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-qty_videos = 5
-# Load environment variables
 load_dotenv()
-
-# API Keys and Channel ID
+qty_videos = 5
 youtube_api_key = os.getenv('YOUTUBE_API_KEY')
 channel_id = os.getenv('CHANNEL_ID')
 llm_api_key = os.getenv('LLM_API_KEY')
 llm_model = os.getenv('LLM_MODEL')
 llm_api_url = os.getenv('LLM_API_URL')
-
+youtube = build('youtube', 'v3', developerKey=youtube_api_key)
+transcription_dir = './transcription'
+summary_dir = './summary'
+os.makedirs(transcription_dir, exist_ok=True)
+os.makedirs(summary_dir, exist_ok=True)
 # Check required environment variables
 if not youtube_api_key or not channel_id or not llm_api_key or not llm_model or not llm_api_key:
     logging.error("One or more required environment variables are not set.")
     exit()
 
-# Initialize YouTube API client
-youtube = build('youtube', 'v3', developerKey=youtube_api_key)
-#openai.api_key = openai_api_key
-
-# Directory setup
-transcription_dir = './transcription'
-summary_dir = './summary'
-os.makedirs(transcription_dir, exist_ok=True)
-os.makedirs(summary_dir, exist_ok=True)
 
 def get_transcripts(youtube, channel_id):
     try:
@@ -47,8 +39,7 @@ def get_transcripts(youtube, channel_id):
 
     for item in results['items']:
         video_id = item['id']['videoId']
-        out_file = os.path.join(transcription_dir, f"{video_id}.json")  # Adjusted to save in transcription directory
-
+        out_file = os.path.join(transcription_dir, f"{video_id}.json") 
         if os.path.exists(out_file):
             logging.info(f"File {out_file} already exists. Skipping.")
             continue
@@ -75,10 +66,8 @@ def get_transcripts(youtube, channel_id):
         except Exception as e:
             logging.error(f"Could not fetch transcript for video ID: {video_id}. Error: {e}")
 
-# Setup logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Adjust this function to use openrouter.ai API
+
 def summarize_text_with_requests(text):
     # Replace this with your openrouter.ai API key
 
@@ -154,8 +143,9 @@ def summarize_transcripts():
                 logging.error(f"Error processing file {filename}. Error: {e}")
 
 def main():
-    get_transcripts(youtube, channel_id)
-    summarize_transcripts()
-
+  logging.info(f"--- Started ---")
+  get_transcripts(youtube, channel_id)
+  summarize_transcripts()
+  logging.info(f"--- Ended ---")
 if __name__ == "__main__":
     main()
